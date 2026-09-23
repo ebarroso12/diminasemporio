@@ -10,6 +10,9 @@ function segredo() {
 /** Sem ADMIN_PASSWORD definido o painel fica trancado — nunca há senha padrão. */
 export const adminConfigurado = Boolean(process.env.ADMIN_PASSWORD);
 
+/** O e-mail é opcional: se ADMIN_EMAIL não existir, só a senha é cobrada. */
+export const exigeEmail = Boolean(process.env.ADMIN_EMAIL);
+
 async function assinar(valor: string): Promise<string> {
   const chave = await crypto.subtle.importKey(
     "raw",
@@ -31,10 +34,22 @@ function comparacaoSegura(a: string, b: string) {
   return diferenca === 0;
 }
 
-export async function senhaCorreta(senha: string) {
-  const esperada = process.env.ADMIN_PASSWORD;
-  if (!esperada) return false;
-  return comparacaoSegura(await assinar(senha), await assinar(esperada)) && senha === esperada;
+/**
+ * Compara pelo resumo HMAC: o tempo de resposta não vaza o conteúdo da senha,
+ * e o e-mail entra na mesma conta quando ADMIN_EMAIL está definido.
+ */
+export async function credenciaisCorretas(email: string, senha: string) {
+  const senhaEsperada = process.env.ADMIN_PASSWORD;
+  if (!senhaEsperada) return false;
+
+  const emailEsperado = process.env.ADMIN_EMAIL;
+  if (emailEsperado) {
+    const informado = await assinar(email.trim().toLowerCase());
+    const esperado = await assinar(emailEsperado.trim().toLowerCase());
+    if (!comparacaoSegura(informado, esperado)) return false;
+  }
+
+  return comparacaoSegura(await assinar(senha), await assinar(senhaEsperada));
 }
 
 export async function abrirSessao() {

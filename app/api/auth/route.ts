@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { abrirSessao, fecharSessao, senhaCorreta, adminConfigurado } from "@/lib/auth";
+import { abrirSessao, fecharSessao, credenciaisCorretas, adminConfigurado } from "@/lib/auth";
 
 export async function POST(request: Request) {
   if (!adminConfigurado) {
@@ -9,15 +9,16 @@ export async function POST(request: Request) {
     );
   }
 
+  let email = "";
   let senha = "";
   try {
-    ({ senha } = await request.json());
+    ({ email = "", senha = "" } = await request.json());
   } catch {
     return NextResponse.json({ erro: "Requisição inválida." }, { status: 400 });
   }
 
-  if (!(await senhaCorreta(String(senha ?? "")))) {
-    return NextResponse.json({ erro: "Senha incorreta." }, { status: 401 });
+  if (!(await credenciaisCorretas(String(email ?? ""), String(senha ?? "")))) {
+    return NextResponse.json({ erro: "E-mail ou senha incorretos." }, { status: 401 });
   }
 
   await abrirSessao();

@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation";
 
 export default function FormularioLogin() {
   const router = useRouter();
+  const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
@@ -18,7 +20,7 @@ export default function FormularioLogin() {
     const resposta = await fetch("/api/auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ senha }),
+      body: JSON.stringify({ email, senha }),
     });
 
     if (resposta.ok) {
@@ -50,18 +52,43 @@ export default function FormularioLogin() {
           Entre para editar o cardápio do site.
         </p>
 
-        <label className="mt-7 block text-sm font-semibold text-marinho" htmlFor="senha">
-          Senha
+        <label className="mt-7 block text-sm font-semibold text-marinho" htmlFor="email">
+          E-mail
         </label>
         <input
-          id="senha"
-          type="password"
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
+          id="email"
+          type="email"
+          autoComplete="username"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           autoFocus
           required
           className="mt-1.5 w-full rounded-xl border border-creme-3 bg-creme px-4 py-3 text-tinta outline-none focus:border-marinho"
         />
+
+        <label className="mt-4 block text-sm font-semibold text-marinho" htmlFor="senha">
+          Senha
+        </label>
+        <div className="relative mt-1.5">
+          <input
+            id="senha"
+            type={mostrarSenha ? "text" : "password"}
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            autoComplete="current-password"
+            required
+            className="w-full rounded-xl border border-creme-3 bg-creme px-4 py-3 pr-12 text-tinta outline-none focus:border-marinho"
+          />
+          <button
+            type="button"
+            onClick={() => setMostrarSenha((v) => !v)}
+            aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
+            aria-pressed={mostrarSenha}
+            className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-tinta-suave transition-colors hover:text-marinho"
+          >
+            <IconeOlho aberto={mostrarSenha} />
+          </button>
+        </div>
 
         {erro && <p className="mt-3 text-sm font-semibold text-cereja">{erro}</p>}
 
@@ -74,5 +101,24 @@ export default function FormularioLogin() {
         </button>
       </form>
     </div>
+  );
+}
+
+function IconeOlho({ aberto }: { aberto: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-5 w-5"
+      aria-hidden="true"
+    >
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" />
+      <circle cx="12" cy="12" r="3" />
+      {!aberto && <path d="M4 20 20 4" />}
+    </svg>
   );
 }
