@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sessaoValida } from "@/lib/auth";
+import { administradorAtual } from "@/lib/admin";
 import { supabaseEscrita, BUCKET_FOTOS } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +8,7 @@ const TIPOS_ACEITOS = ["image/jpeg", "image/png", "image/webp", "image/avif"];
 const TAMANHO_MAXIMO = 5 * 1024 * 1024; // 5 MB
 
 export async function POST(request: Request) {
-  if (!(await sessaoValida())) {
+  if (!(await administradorAtual())) {
     return NextResponse.json({ erro: "Não autorizado." }, { status: 401 });
   }
 

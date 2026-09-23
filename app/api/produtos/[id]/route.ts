@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sessaoValida } from "@/lib/auth";
+import { administradorAtual } from "@/lib/admin";
 import { atualizarProduto, removerProduto } from "@/lib/produtos";
 import type { Produto } from "@/lib/types";
 
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 type Contexto = { params: Promise<{ id: string }> };
 
 export async function PATCH(request: Request, { params }: Contexto) {
-  if (!(await sessaoValida())) {
+  if (!(await administradorAtual())) {
     return NextResponse.json({ erro: "Não autorizado." }, { status: 401 });
   }
 
@@ -39,7 +39,7 @@ export async function PATCH(request: Request, { params }: Contexto) {
 }
 
 export async function DELETE(_request: Request, { params }: Contexto) {
-  if (!(await sessaoValida())) {
+  if (!(await administradorAtual())) {
     return NextResponse.json({ erro: "Não autorizado." }, { status: 401 });
   }
 

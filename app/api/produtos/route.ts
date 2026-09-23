@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sessaoValida } from "@/lib/auth";
+import { administradorAtual } from "@/lib/admin";
 import { listarProdutos, criarProduto } from "@/lib/produtos";
 import type { Produto } from "@/lib/types";
 
@@ -10,7 +10,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  if (!(await sessaoValida())) {
+  if (!(await administradorAtual())) {
     return NextResponse.json({ erro: "Não autorizado." }, { status: 401 });
   }
 

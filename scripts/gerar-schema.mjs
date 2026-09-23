@@ -45,6 +45,11 @@ create index if not exists produtos_ordem_idx on public.produtos (ordem);
 -- Por isso existe apenas a policy de leitura: ninguém grava pelo navegador.
 alter table public.produtos enable row level security;
 
+-- RLS decide quais LINHAS aparecem; o GRANT decide se a tabela é alcançável
+-- pela Data API. Sem ele o select devolve \"permission denied\" mesmo com policy.
+grant usage on schema public to anon, authenticated;
+grant select on public.produtos to anon, authenticated;
+
 drop policy if exists "leitura publica do cardapio" on public.produtos;
 create policy "leitura publica do cardapio"
   on public.produtos for select

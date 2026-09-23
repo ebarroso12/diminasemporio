@@ -3,39 +3,65 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { supabaseNavegador } from "@/lib/supabase/navegador";
+import CampoSenha from "./CampoSenha";
 
 export default function FormularioLogin() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [modoRecuperar, setModoRecuperar] = useState(false);
 
   async function entrar(evento: React.FormEvent) {
     evento.preventDefault();
     setEnviando(true);
     setErro(null);
 
-    const resposta = await fetch("/api/auth", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, senha }),
+    const supabase = supabaseNavegador();
+    const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+
+    if (error) {
+      setErro(
+        error.message === "Invalid login credentials"
+          ? "E-mail ou senha incorretos."
+          : error.message
+      );
+      setEnviando(false);
+      return;
+    }
+    router.refresh();
+  }
+
+  async function recuperar(evento: React.FormEvent) {
+    evento.preventDefault();
+    setEnviando(true);
+    setErro(null);
+    setAviso(null);
+
+    const supabase = supabaseNavegador();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/admin/redefinir`,
     });
 
-    if (resposta.ok) {
-      router.refresh();
-    } else {
-      const { erro } = await resposta.json().catch(() => ({ erro: "Falha ao entrar." }));
-      setErro(erro);
-      setEnviando(false);
+    setEnviando(false);
+    if (error) {
+      setErro(error.message);
+      return;
     }
+    // Resposta igual com ou sem conta: não confirma para estranhos quais
+    // e-mails têm acesso ao painel.
+    setAviso(
+      "Se houver conta com esse e-mail, o link de redefinição já está a caminho. Confira também o spam."
+    );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    <div className="flex min-h-screen items-center justify-center px-4 py-10">
       <form
-        onSubmit={entrar}
+        onSubmit={modoRecuperar ? recuperar : entrar}
         className="sombra-cartao w-full max-w-sm rounded-suave bg-creme-2 p-8 ring-1 ring-creme-3"
       >
         <Image
@@ -46,10 +72,12 @@ export default function FormularioLogin() {
           className="mx-auto h-20 w-20 rounded-full"
         />
         <h1 className="mt-5 text-center font-display text-2xl font-semibold text-marinho">
-          Área do administrador
+          {modoRecuperar ? "Recuperar senha" : "Área do administrador"}
         </h1>
         <p className="mt-1 text-center text-sm text-tinta-suave">
-          Entre para editar o cardápio do site.
+          {modoRecuperar
+            ? "Informe o e-mail da conta e enviamos um link para criar uma senha nova."
+            : "Entre para editar o cardápio do site."}
         </p>
 
         <label className="mt-7 block text-sm font-semibold text-marinho" htmlFor="email">
@@ -63,62 +91,46 @@ export default function FormularioLogin() {
           onChange={(e) => setEmail(e.target.value)}
           autoFocus
           required
-          className="mt-1.5 w-full rounded-xl border border-creme-3 bg-creme px-4 py-3 text-tinta outline-none focus:border-marinho"
+          className="entrada mt-1.5 py-3"
         />
 
-        <label className="mt-4 block text-sm font-semibold text-marinho" htmlFor="senha">
-          Senha
-        </label>
-        <div className="relative mt-1.5">
-          <input
-            id="senha"
-            type={mostrarSenha ? "text" : "password"}
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            autoComplete="current-password"
-            required
-            className="w-full rounded-xl border border-creme-3 bg-creme px-4 py-3 pr-12 text-tinta outline-none focus:border-marinho"
-          />
-          <button
-            type="button"
-            onClick={() => setMostrarSenha((v) => !v)}
-            aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
-            aria-pressed={mostrarSenha}
-            className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-tinta-suave transition-colors hover:text-marinho"
-          >
-            <IconeOlho aberto={mostrarSenha} />
-          </button>
-        </div>
+        {!modoRecuperar && (
+          <>
+            <label className="mt-4 block text-sm font-semibold text-marinho" htmlFor="senha">
+              Senha
+            </label>
+            <CampoSenha
+              id="senha"
+              valor={senha}
+              aoMudar={setSenha}
+              autoComplete="current-password"
+            />
+          </>
+        )}
 
         {erro && <p className="mt-3 text-sm font-semibold text-cereja">{erro}</p>}
+        {aviso && <p className="mt-3 text-sm font-semibold text-folha">{aviso}</p>}
 
         <button
           type="submit"
           disabled={enviando}
           className="mt-6 w-full rounded-full bg-marinho py-3.5 font-bold text-creme transition-transform hover:scale-[1.02] disabled:opacity-60"
         >
-          {enviando ? "Entrando..." : "Entrar"}
+          {enviando ? "Aguarde..." : modoRecuperar ? "Enviar link de redefinição" : "Entrar"}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setModoRecuperar((v) => !v);
+            setErro(null);
+            setAviso(null);
+          }}
+          className="mt-4 w-full text-center text-sm font-semibold text-tinta-suave transition-colors hover:text-marinho"
+        >
+          {modoRecuperar ? "Voltar para o login" : "Esqueci minha senha"}
         </button>
       </form>
     </div>
-  );
-}
-
-function IconeOlho({ aberto }: { aberto: boolean }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-5 w-5"
-      aria-hidden="true"
-    >
-      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" />
-      <circle cx="12" cy="12" r="3" />
-      {!aberto && <path d="M4 20 20 4" />}
-    </svg>
   );
 }
