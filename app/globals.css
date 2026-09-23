@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+@theme {
+  /* Paleta tirada do logo: creme do papel, marinho do anel, marrom da caligrafia */
+  --color-creme: #faf4e8;
+  --color-creme-2: #f3e6d1;
+  --color-creme-3: #e9d7bb;
+  --color-marinho: #1c3a5e;
+  --color-marinho-claro: #2f5680;
+  --color-cafe: #6b4326;
+  --color-cafe-claro: #9a6a41;
+  --color-folha: #4f6b3a;
+  --color-cereja: #b23a2f;
+  --color-tinta: #33210f;
+  --color-tinta-suave: #6a5341;
+
+  --font-display: var(--fonte-display), Georgia, serif;
+  --font-corpo: var(--fonte-corpo), system-ui, sans-serif;
+  --font-script: var(--fonte-script), cursive;
+
+  --radius-suave: 1.25rem;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+  }
+
+  body {
+    background-color: var(--color-creme);
+    color: var(--color-tinta);
+    font-family: var(--font-corpo);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: var(--color-marinho);
+    color: var(--color-creme);
+  }
+}
+
+@layer utilities {
+  /* Textura de papel: pontilhado quase imperceptível, dá calor ao fundo chapado */
+  .textura-papel {
+    background-image: radial-gradient(
+      circle at 1px 1px,
+      rgba(107, 67, 38, 0.06) 1px,
+      transparent 0
+    );
+    background-size: 22px 22px;
+  }
+
+  .sombra-cartao {
+    box-shadow:
+      0 1px 2px rgba(51, 33, 15, 0.04),
+      0 12px 32px -12px rgba(51, 33, 15, 0.18);
+  }
+
+  .sombra-flutuante {
+    box-shadow: 0 10px 30px -6px rgba(28, 58, 94, 0.45);
+  }
+
+  /* Entrada suave usada nas seções — respeita quem pediu menos movimento */
+  .surge {
+    animation: surge 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes surge {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .surge {
+      animation: none;
+    }
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+@layer components {
+  .entrada {
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid var(--color-creme-3);
+    background-color: var(--color-creme);
+    padding: 0.625rem 0.875rem;
+    font-size: 0.9rem;
+    color: var(--color-tinta);
+    outline: none;
+  }
+
+  .entrada:focus {
+    border-color: var(--color-marinho);
+  }
+}
